@@ -392,16 +392,12 @@ export const SpeechRecorder: React.FC<SpeechRecorderProps> = ({ selectedLanguage
                   <Folder className="w-4 h-4 text-blue-600" />
                   <span className="font-medium">Saved as: {savedFileName}</span>
                 </div>
-                <span>•</span>
                 <span>Language: {selectedLanguage.name}</span>
-                <span>•</span>
-                <span>Processed with Google Cloud AI</span>
               </div>
               {audioBlob && savedFileName && (
                 <button
                   onClick={downloadAudio}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
-                >
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
                   <Download className="w-4 h-4" />
                   <span>Download Audio</span>
                 </button>
@@ -412,7 +408,7 @@ export const SpeechRecorder: React.FC<SpeechRecorderProps> = ({ selectedLanguage
       )}
 
       {/* Debug Information */}
-      {process.env.NODE_ENV === 'development' && transcriptionResult && (
+      {/* {process.env.NODE_ENV === 'development' && transcriptionResult && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mt-8 max-w-6xl mx-auto">
           <button
             onClick={() => setIsDebugExpanded(!isDebugExpanded)}
@@ -427,7 +423,7 @@ export const SpeechRecorder: React.FC<SpeechRecorderProps> = ({ selectedLanguage
             </pre>
           )}
         </div>
-      )}
+      )} */}
     </div>
   );
 };
