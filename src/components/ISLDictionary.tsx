@@ -46,60 +46,72 @@ export function ISLDictionary({ isOpen, onClose }: ISLDictionaryProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl h-[80vh] p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="text-xl font-semibold">ISL Dictionary</DialogTitle>
+      <DialogContent className="max-w-5xl h-[65vh] p-0">
+        <DialogHeader className="px-4 py-3 border-b">
+          <DialogTitle className="text-lg font-semibold">ISL Dictionary</DialogTitle>
         </DialogHeader>
-        <div className="flex h-[calc(80vh-4rem)]">
+        <div className="flex h-[calc(65vh-3.5rem)]">
           {/* Left Panel - Dictionary List */}
-          <div className="w-1/3 border-r p-4 flex flex-col">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search words..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-            <ScrollArea className="flex-1">
-              {isLoading ? (
-                <div className="text-center py-4">Loading dictionary...</div>
-              ) : filteredDictionary.length === 0 ? (
-                <div className="text-center py-4">No words found</div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredDictionary.map((item) => (
-                    <Button
-                      key={item.word}
-                      variant={selectedVideo === item.videoPath ? "default" : "ghost"}
-                      className="w-full justify-start"
-                      onClick={() => setSelectedVideo(item.videoPath)}
-                    >
-                      {item.word}
-                    </Button>
-                  ))}
+          <div className="w-1/3 flex flex-col">
+            <div className="h-full p-3 pr-0">
+              <div className="flex items-center space-x-2 mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search words..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-8 text-sm"
+                  />
                 </div>
-              )}
-            </ScrollArea>
+              </div>
+              <ScrollArea className="flex-1 pr-3">
+                {isLoading ? (
+                  <div className="text-center py-3">Loading dictionary...</div>
+                ) : filteredDictionary.length === 0 ? (
+                  <div className="text-center py-3">No words found</div>
+                ) : (
+                  <div className="space-y-1">
+                    {filteredDictionary.map((item) => (
+                      <Button
+                        key={item.word}
+                        variant={selectedVideo === item.videoPath ? "default" : "ghost"}
+                        className="w-full justify-start h-8 text-sm"
+                        onClick={() => setSelectedVideo(item.videoPath)}
+                      >
+                        {item.word}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+            <div className="h-full w-[1px] bg-border" />
           </div>
 
           {/* Right Panel - Video Player */}
           <div className="w-2/3 p-4 flex flex-col">
-            <div className="flex-1 flex items-center justify-center bg-white rounded-lg">
+            {selectedVideo && (
+              <div className="mb-3 px-2 text-center">
+                <h3 className="text-lg font-semibold text-primary">
+                  {dictionary.find(item => item.videoPath === selectedVideo)?.word}
+                </h3>
+              </div>
+            )}
+            <div className="flex-1 flex items-center justify-center bg-white rounded-lg overflow-hidden">
               {selectedVideo ? (
-                <video
-                  src={selectedVideo}
-                  controls
-                  className="max-w-full max-h-full rounded-lg"
-                  autoPlay
-                />
+                <div className="w-full h-full flex items-center justify-center p-4">
+                  <video
+                    src={selectedVideo}
+                    controls
+                    className="w-full h-full object-contain"
+                    autoPlay
+                  />
+                </div>
               ) : (
                 <div className="text-center text-muted-foreground">
-                  <BookOpen className="mx-auto h-12 w-12 mb-2" />
-                  <p>Select a word to view its sign language video</p>
+                  <BookOpen className="mx-auto h-10 w-10 mb-2" />
+                  <p className="text-sm">Select a word to view its sign language video</p>
                 </div>
               )}
             </div>
