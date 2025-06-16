@@ -734,31 +734,31 @@ export default function ISLStudioPage() {
                 </div>
               )}
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="transcription-output-area" className="text-xs sm:text-sm font-medium">
-                  Transcription (Source Language)
-                </Label>
-                <Textarea
-                  id="transcription-output-area"
-                  placeholder={isLoading ? "Processing..." : "Transcribed text will appear here..."}
-                  value={transcribedText}
-                  readOnly
-                  rows={3}
-                  className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
-                />
-              </div>
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="translation-output-area" className="text-xs sm:text-sm font-medium">
-                  NLP Translation
-                </Label>
-                <Textarea
-                  id="translation-output-area"
-                  placeholder={isLoading ? "Translating..." : "English translation (stop words & punctuation removed) will appear here..."}
-                  value={translatedText}
-                  readOnly
-                  rows={3}
-                  className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="transcription" className="text-sm font-medium text-gray-700">
+                    Transcription
+                  </Label>
+                  <Textarea
+                    id="transcription"
+                    value={transcribedText}
+                    readOnly
+                    className="mt-1 h-32 resize-none bg-gray-50"
+                    placeholder="Transcription will appear here..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="translation" className="text-sm font-medium text-gray-700">
+                    NLP Translation
+                  </Label>
+                  <Textarea
+                    id="translation"
+                    value={translatedText}
+                    readOnly
+                    className="mt-1 h-32 resize-none bg-gray-50"
+                    placeholder="Translation will appear here..."
+                  />
+                </div>
               </div>
             </div>
 
