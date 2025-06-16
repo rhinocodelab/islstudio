@@ -522,386 +522,7 @@ export default function ISLStudioPage() {
   }, []);
 
   return (
-    <main className="flex h-screen flex-col items-center justify-between p-2 sm:p-4 bg-background font-body relative">
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.50] rotate-[-360deg] scale-100 flex flex-wrap gap-2 sm:gap-4 p-2 sm:p-4">
-          {Array.from({ length: 100 }).map((_, i) => (
-            <div key={i} className="text-xl sm:text-3xl font-bold text-muted-foreground/20 select-none">
-              POC DEMO
-            </div>
-          ))}
-        </div>
-      </div>
-      <Card className="w-full max-w-6xl mx-auto shadow-2xl rounded-xl overflow-hidden h-[calc(100vh-0.5rem)] sm:h-[calc(100vh-2rem)] flex flex-col relative z-10">
-        <CardHeader className="bg-primary text-primary-foreground p-3 sm:p-4">
-          <CardTitle className="text-xl sm:text-2xl font-headline text-center">ISL Studio</CardTitle>
-          <CardDescription className="text-center text-primary-foreground/90 pt-1 text-sm sm:text-base">
-            AI-powered Indian Sign Language (ISL) communication support. Transcribe and translate spoken languages.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-3 sm:p-6 md:flex gap-x-4 lg:gap-x-8 gap-y-4 lg:gap-y-6 flex-1 overflow-hidden">
-          {/* Left Column */}
-          <div className="space-y-3 sm:space-y-4 md:w-1/2 flex flex-col overflow-hidden">
-            <div className="flex items-end space-x-2 sm:space-x-3 px-1">
-              <div className="flex-grow space-y-1 sm:space-y-2 min-w-[150px] sm:min-w-[200px]">
-                <Label htmlFor="language-select" className="text-xs sm:text-sm font-medium">Source Language</Label>
-                <Select value={selectedLanguage} onValueChange={handleLanguageChange} disabled={isLoading || isRecording}>
-                  <SelectTrigger id="language-select" className="w-full text-sm sm:text-base py-1.5 sm:py-2 h-auto">
-                    <SelectValue placeholder="Select a language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LANGUAGES.map((lang) => (
-                      <SelectItem key={lang.value} value={lang.value} className="text-sm sm:text-base py-1.5 sm:py-2">
-                        {lang.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                disabled={isLoading && !isRecording}
-                className="h-8 sm:h-[38px] self-end shrink-0 text-xs sm:text-sm"
-                aria-label="Reset application state"
-              >
-                <RotateCcw className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Reset
-              </Button>
-            </div>
-
-            <Tabs
-              value={activeTab}
-              onValueChange={(newTab) => {
-                if (activeTab === 'speech' && newTab !== 'speech' && (recordedAudioUrl || isRecording)) {
-                  isResettingRef.current = true;
-                  if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-                    mediaRecorderRef.current.stop();
-                  } else {
-                    clearPreviousAudio();
-                    isResettingRef.current = false;
-                  }
-                }
-                if (newTab !== 'import') {
-                  setSelectedFile(null);
-                  setFileInputKey(prevKey => prevKey + 1);
-                }
-                setError(null);
-                setActiveTab(newTab);
-              }}
-              className="w-full flex-1 flex flex-col overflow-hidden"
-            >
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger
-                  value="speech"
-                  disabled={isLoading || isRecording}
-                  className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
-                >
-                  <Mic className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Speech
-                </TabsTrigger>
-                <TabsTrigger
-                  value="type"
-                  disabled={isLoading || isRecording}
-                  className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
-                >
-                  <Type className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Type
-                </TabsTrigger>
-                <TabsTrigger
-                  value="import"
-                  disabled={isLoading || isRecording}
-                  className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
-                >
-                  <FileAudio className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Import
-                </TabsTrigger>
-              </TabsList>
-              <div className="flex-1 overflow-y-auto">
-                <TabsContent value="speech" className="pt-3 sm:pt-4">
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
-                    <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                      <Mic className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Speech to Text
-                    </h3>
-                    <div className="flex-grow flex flex-col justify-center">
-                      <Button
-                        size="lg"
-                        className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto transition-all duration-150 ease-in-out transform active:scale-95"
-                        variant={recordButtonState.variant}
-                        onClick={handleRecordButtonClick}
-                        disabled={recordButtonState.disabled}
-                      >
-                        {recordButtonState.icon}
-                        {recordButtonState.text}
-                      </Button>
-                      <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1 sm:mt-2">Click the button to start recording your voice. Click again to stop.</p>
-                    </div>
-                    {recordedAudioUrl && !isRecording && activeTab === 'speech' && (
-                      <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-                        <Label className="text-xs sm:text-sm font-medium">Recorded Audio</Label>
-                        <audio controls src={recordedAudioUrl} className="w-full rounded-md shadow-sm">
-                          Your browser does not support the audio element.
-                        </audio>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleDownloadAudio}
-                          className="w-full text-xs sm:text-sm"
-                          disabled={!recordedAudioBlob}
-                        >
-                          <Download className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                          Download Recorded Audio
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-                <TabsContent value="type" className="pt-3 sm:pt-4">
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
-                    <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                      <Type className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Type Text to Process
-                    </h3>
-                    <div className="flex-grow flex flex-col justify-center">
-                      <Textarea
-                        id="manual-input-area"
-                        placeholder="Type or paste text here..."
-                        value={manualInputText}
-                        onChange={(e) => setManualInputText(e.target.value)}
-                        rows={3}
-                        className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
-                        disabled={isLoading || isRecording}
-                      />
-                      <Button
-                        size="lg"
-                        className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto mt-3 sm:mt-4"
-                        variant="outline"
-                        onClick={handleProcessText}
-                        disabled={isLoading || isRecording || !manualInputText.trim() || (isLoading && activeTab === 'type')}
-                      >
-                        {isLoading && activeTab === 'type' ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <Type className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
-                        Process Typed Text
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-                <TabsContent value="import" className="pt-3 sm:pt-4">
-                  <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
-                    <h3 className="text-base sm:text-lg font-semibold flex items-center">
-                      <FileAudio className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Import Audio
-                    </h3>
-                    <div className="flex-grow flex flex-col justify-center">
-                      <Input
-                        key={fileInputKey}
-                        id="audio-file-input"
-                        type="file"
-                        accept="audio/*"
-                        onChange={handleFileChange}
-                        disabled={isLoading || isRecording}
-                        className="w-full text-sm sm:text-base file:mr-2 file:py-1.5 file:px-2 sm:file:py-2 sm:file:px-3 file:rounded-md file:border file:border-primary/50 file:bg-primary/10 file:text-primary file:text-xs sm:file:text-sm file:font-semibold hover:file:bg-primary/20 cursor-pointer p-1.5 sm:p-2 h-auto border-primary/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                      <Button
-                        size="lg"
-                        className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto mt-3 sm:mt-4"
-                        variant="outline"
-                        onClick={handleProcessImportedAudio}
-                        disabled={isLoading || isRecording || !selectedFile || (isLoading && activeTab === 'import')}
-                      >
-                        {isLoading && activeTab === 'import' ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <FileAudio className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
-                        Process Imported Audio
-                      </Button>
-                      {selectedFile && <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1 sm:mt-2">Selected file: {selectedFile.name}</p>}
-                    </div>
-                  </div>
-                </TabsContent>
-              </div>
-            </Tabs>
-
-            {error && (
-              <div className="flex items-center p-2 sm:p-3 rounded-md bg-destructive/10 text-destructive border border-destructive/20">
-                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 shrink-0" />
-                <p className="text-xs sm:text-sm">{error}</p>
-              </div>
-            )}
-
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="transcription-output-area" className="text-xs sm:text-sm font-medium">
-                Transcription (Source Language)
-              </Label>
-              <Textarea
-                id="transcription-output-area"
-                placeholder={isLoading ? "Processing..." : "Transcribed text will appear here..."}
-                value={transcribedText}
-                readOnly
-                rows={3}
-                className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
-              />
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label htmlFor="translation-output-area" className="text-xs sm:text-sm font-medium">
-                NLP Translation
-              </Label>
-              <Textarea
-                id="translation-output-area"
-                placeholder={isLoading ? "Translating..." : "English translation (stop words & punctuation removed) will appear here..."}
-                value={translatedText}
-                readOnly
-                rows={3}
-                className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
-              />
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div className="space-y-3 sm:space-y-4 md:w-1/2 flex flex-col overflow-hidden">
-            <div className="flex flex-col space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm flex-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="isl-video-output" className="text-base sm:text-lg font-semibold flex items-center">
-                  <Video className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Generated ISL Video
-                </Label>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleDeleteGeneratedVideos}
-                  disabled={isLoading || isGeneratingVideo}
-                  className="h-7 sm:h-8 text-xs sm:text-sm"
-                >
-                  <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                  Delete All
-                </Button>
-              </div>
-              <div id="isl-video-output" className="aspect-video w-full bg-muted/50 rounded-lg shadow-inner flex items-center justify-center p-2 flex-grow overflow-hidden">
-                {generatedVideoUrl ? (
-                  <video
-                    src={generatedVideoUrl}
-                    controls
-                    className="w-full h-full object-contain rounded-md"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white/10">
-                    <Image
-                      src="/image/isl.png"
-                      alt="Generated ISL Video Placeholder"
-                      width={200}
-                      height={200}
-                      className="rounded-md object-contain max-h-full max-w-full"
-                      data-ai-hint="sign language"
-                      priority
-                      unoptimized
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button
-                  size="lg"
-                  className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
-                  variant="default"
-                  onClick={handleGenerateVideo}
-                  disabled={isLoading || !translatedText.trim() || isGeneratingVideo}
-                >
-                  {isGeneratingVideo ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                      Generating Video...
-                    </>
-                  ) : (
-                    <>
-                      <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                      Generate ISL Video
-                    </>
-                  )}
-                </Button>
-                <Button
-                  size="lg"
-                  className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
-                  variant="secondary"
-                  onClick={handlePublishVideo}
-                  disabled={!generatedVideoUrl || isGeneratingVideo}
-                >
-                  <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                  Publish ISL Video
-                </Button>
-              </div>
-
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium">Published ISL Video URL</Label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopyUrl}
-                    className="h-8 px-2"
-                    disabled={!publishedUrl}
-                  >
-                    <Copy className="h-4 w-4 mr-1" />
-                    Copy URL
-                  </Button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    value={publishedUrl || 'No video published yet'}
-                    readOnly
-                    className="flex-1 text-sm bg-background"
-                    disabled={!publishedUrl}
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => publishedUrl && window.open(publishedUrl, '_blank')}
-                    className="h-8 px-2"
-                    disabled={!publishedUrl}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Features Card */}
-            <div className="flex flex-col space-y-1.5 sm:space-y-2 p-2 border-2 border-primary/20 rounded-lg shadow-sm">
-              <Label className="text-xs sm:text-sm font-semibold flex items-center">
-                <AlertCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" /> Key Features
-              </Label>
-              <div className="space-y-1 sm:space-y-1.5">
-                <div className="flex items-start space-x-1.5 sm:space-x-2">
-                  <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-[10px] sm:text-xs">Speech Recognition</h4>
-                    <p className="text-[9px] sm:text-[11px] text-muted-foreground">Record and transcribe speech in multiple Indian languages</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-1.5 sm:space-x-2">
-                  <Type className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-[10px] sm:text-xs">Text Input</h4>
-                    <p className="text-[9px] sm:text-[11px] text-muted-foreground">Type or paste text for direct processing</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-1.5 sm:space-x-2">
-                  <FileAudio className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-[10px] sm:text-xs">Audio Import</h4>
-                    <p className="text-[9px] sm:text-[11px] text-muted-foreground">Upload audio files for transcription</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-1.5 sm:space-x-2">
-                  <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-[10px] sm:text-xs">ISL Video Generation</h4>
-                    <p className="text-[9px] sm:text-[11px] text-muted-foreground">Convert text to Indian Sign Language video</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-1.5 sm:space-x-2">
-                  <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-[10px] sm:text-xs">Multi-language Support</h4>
-                    <p className="text-[9px] sm:text-[11px] text-muted-foreground">Supports English, Hindi, Marathi, and Gujarati</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <footer className="text-center py-1.5 sm:py-2 text-muted-foreground text-xs sm:text-sm">
-        <p>&copy; {new Date().getFullYear()} ISL Studio. AI-powered communication support. | Sundyne Technologies</p>
-      </footer>
+    <main className="min-h-screen bg-[#f5f5f5] text-gray-900 p-2 md:p-4">
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -925,6 +546,378 @@ export default function ISLStudioPage() {
           },
         }}
       />
+      <div className="container mx-auto px-2 sm:px-4">
+        <Card className="w-full max-w-6xl mx-auto shadow-2xl rounded-xl overflow-hidden h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] flex flex-col relative z-10">
+          <CardHeader className="bg-primary text-primary-foreground p-2 sm:p-3">
+            <CardTitle className="text-xl sm:text-2xl font-headline text-center">ISL Studio</CardTitle>
+            <CardDescription className="text-center text-primary-foreground/90 pt-1 text-sm sm:text-base">
+              AI-powered Indian Sign Language (ISL) communication support. Transcribe and translate spoken languages.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-6 md:flex gap-x-4 lg:gap-x-8 gap-y-4 lg:gap-y-6 flex-1 overflow-hidden">
+            {/* Left Column */}
+            <div className="space-y-3 sm:space-y-4 md:w-1/2 flex flex-col overflow-hidden">
+              <div className="flex items-end space-x-2 sm:space-x-3 px-1">
+                <div className="flex-grow space-y-1 sm:space-y-2 min-w-[150px] sm:min-w-[200px]">
+                  <Label htmlFor="language-select" className="text-xs sm:text-sm font-medium">Source Language</Label>
+                  <Select value={selectedLanguage} onValueChange={handleLanguageChange} disabled={isLoading || isRecording}>
+                    <SelectTrigger id="language-select" className="w-full text-sm sm:text-base py-1.5 sm:py-2 h-auto">
+                      <SelectValue placeholder="Select a language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.value} value={lang.value} className="text-sm sm:text-base py-1.5 sm:py-2">
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleReset}
+                  disabled={isLoading && !isRecording}
+                  className="h-8 sm:h-[38px] self-end shrink-0 text-xs sm:text-sm"
+                  aria-label="Reset application state"
+                >
+                  <RotateCcw className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Reset
+                </Button>
+              </div>
+
+              <Tabs
+                value={activeTab}
+                onValueChange={(newTab) => {
+                  if (activeTab === 'speech' && newTab !== 'speech' && (recordedAudioUrl || isRecording)) {
+                    isResettingRef.current = true;
+                    if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                      mediaRecorderRef.current.stop();
+                    } else {
+                      clearPreviousAudio();
+                      isResettingRef.current = false;
+                    }
+                  }
+                  if (newTab !== 'import') {
+                    setSelectedFile(null);
+                    setFileInputKey(prevKey => prevKey + 1);
+                  }
+                  setError(null);
+                  setActiveTab(newTab);
+                }}
+                className="w-full flex-1 flex flex-col overflow-hidden"
+              >
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger
+                    value="speech"
+                    disabled={isLoading || isRecording}
+                    className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
+                  >
+                    <Mic className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Speech
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="type"
+                    disabled={isLoading || isRecording}
+                    className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
+                  >
+                    <Type className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Type
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="import"
+                    disabled={isLoading || isRecording}
+                    className="py-1.5 sm:py-2 text-xs sm:text-sm data-[state=active]:shadow-md"
+                  >
+                    <FileAudio className="mr-1 h-3.5 w-3.5 sm:mr-2 sm:h-5 sm:w-5" /> Import
+                  </TabsTrigger>
+                </TabsList>
+                <div className="flex-1 overflow-y-auto">
+                  <TabsContent value="speech" className="pt-3 sm:pt-4">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                      <h3 className="text-base sm:text-lg font-semibold flex items-center">
+                        <Mic className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Speech to Text
+                      </h3>
+                      <div className="flex-grow flex flex-col justify-center">
+                        <Button
+                          size="lg"
+                          className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto transition-all duration-150 ease-in-out transform active:scale-95"
+                          variant={recordButtonState.variant}
+                          onClick={handleRecordButtonClick}
+                          disabled={recordButtonState.disabled}
+                        >
+                          {recordButtonState.icon}
+                          {recordButtonState.text}
+                        </Button>
+                        <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1 sm:mt-2">Click the button to start recording your voice. Click again to stop.</p>
+                      </div>
+                      {recordedAudioUrl && !isRecording && activeTab === 'speech' && (
+                        <div className="mt-3 sm:mt-4 space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
+                          <Label className="text-xs sm:text-sm font-medium">Recorded Audio</Label>
+                          <audio controls src={recordedAudioUrl} className="w-full rounded-md shadow-sm">
+                            Your browser does not support the audio element.
+                          </audio>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleDownloadAudio}
+                            className="w-full text-xs sm:text-sm"
+                            disabled={!recordedAudioBlob}
+                          >
+                            <Download className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            Download Recorded Audio
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="type" className="pt-3 sm:pt-4">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                      <h3 className="text-base sm:text-lg font-semibold flex items-center">
+                        <Type className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Type Text to Process
+                      </h3>
+                      <div className="flex-grow flex flex-col justify-center">
+                        <Textarea
+                          id="manual-input-area"
+                          placeholder="Type or paste text here..."
+                          value={manualInputText}
+                          onChange={(e) => setManualInputText(e.target.value)}
+                          rows={3}
+                          className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
+                          disabled={isLoading || isRecording}
+                        />
+                        <Button
+                          size="lg"
+                          className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto mt-3 sm:mt-4"
+                          variant="outline"
+                          onClick={handleProcessText}
+                          disabled={isLoading || isRecording || !manualInputText.trim() || (isLoading && activeTab === 'type')}
+                        >
+                          {isLoading && activeTab === 'type' ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <Type className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
+                          Process Typed Text
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="import" className="pt-3 sm:pt-4">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                      <h3 className="text-base sm:text-lg font-semibold flex items-center">
+                        <FileAudio className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Import Audio
+                      </h3>
+                      <div className="flex-grow flex flex-col justify-center">
+                        <Input
+                          key={fileInputKey}
+                          id="audio-file-input"
+                          type="file"
+                          accept="audio/*"
+                          onChange={handleFileChange}
+                          disabled={isLoading || isRecording}
+                          className="w-full text-sm sm:text-base file:mr-2 file:py-1.5 file:px-2 sm:file:py-2 sm:file:px-3 file:rounded-md file:border file:border-primary/50 file:bg-primary/10 file:text-primary file:text-xs sm:file:text-sm file:font-semibold hover:file:bg-primary/20 cursor-pointer p-1.5 sm:p-2 h-auto border-primary/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                        <Button
+                          size="lg"
+                          className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto mt-3 sm:mt-4"
+                          variant="outline"
+                          onClick={handleProcessImportedAudio}
+                          disabled={isLoading || isRecording || !selectedFile || (isLoading && activeTab === 'import')}
+                        >
+                          {isLoading && activeTab === 'import' ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <FileAudio className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
+                          Process Imported Audio
+                        </Button>
+                        {selectedFile && <p className="text-[10px] sm:text-xs text-center text-muted-foreground mt-1 sm:mt-2">Selected file: {selectedFile.name}</p>}
+                      </div>
+                    </div>
+                  </TabsContent>
+                </div>
+              </Tabs>
+
+              {error && (
+                <div className="flex items-center p-2 sm:p-3 rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5 sm:mr-2 shrink-0" />
+                  <p className="text-xs sm:text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="transcription-output-area" className="text-xs sm:text-sm font-medium">
+                  Transcription (Source Language)
+                </Label>
+                <Textarea
+                  id="transcription-output-area"
+                  placeholder={isLoading ? "Processing..." : "Transcribed text will appear here..."}
+                  value={transcribedText}
+                  readOnly
+                  rows={3}
+                  className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
+                />
+              </div>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="translation-output-area" className="text-xs sm:text-sm font-medium">
+                  NLP Translation
+                </Label>
+                <Textarea
+                  id="translation-output-area"
+                  placeholder={isLoading ? "Translating..." : "English translation (stop words & punctuation removed) will appear here..."}
+                  value={translatedText}
+                  readOnly
+                  rows={3}
+                  className="w-full text-sm sm:text-base bg-secondary/30 rounded-md shadow-inner"
+                />
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-3 sm:space-y-4 md:w-1/2 flex flex-col overflow-hidden">
+              <div className="flex flex-col space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm flex-1">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="isl-video-output" className="text-base sm:text-lg font-semibold flex items-center">
+                    <Video className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Generated ISL Video
+                  </Label>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleDeleteGeneratedVideos}
+                    disabled={isLoading || isGeneratingVideo}
+                    className="h-7 sm:h-8 text-xs sm:text-sm"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                    Delete All
+                  </Button>
+                </div>
+                <div id="isl-video-output" className="aspect-video w-full bg-muted/50 rounded-lg shadow-inner flex items-center justify-center p-2 flex-grow overflow-hidden">
+                  {generatedVideoUrl ? (
+                    <video
+                      src={generatedVideoUrl}
+                      controls
+                      className="w-full h-full object-contain rounded-md"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-white/10">
+                      <Image
+                        src="/image/isl.png"
+                        alt="Generated ISL Video Placeholder"
+                        width={200}
+                        height={200}
+                        className="rounded-md object-contain max-h-full max-w-full"
+                        data-ai-hint="sign language"
+                        priority
+                        unoptimized
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    size="lg"
+                    className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
+                    variant="default"
+                    onClick={handleGenerateVideo}
+                    disabled={isLoading || !translatedText.trim() || isGeneratingVideo}
+                  >
+                    {isGeneratingVideo ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                        Generating Video...
+                      </>
+                    ) : (
+                      <>
+                        <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                        Generate ISL Video
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="lg"
+                    className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
+                    variant="secondary"
+                    onClick={handlePublishVideo}
+                    disabled={!generatedVideoUrl || isGeneratingVideo}
+                  >
+                    <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                    Publish ISL Video
+                  </Button>
+                </div>
+
+                <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium">Published ISL Video URL</Label>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCopyUrl}
+                      className="h-8 px-2"
+                      disabled={!publishedUrl}
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy URL
+                    </Button>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      value={publishedUrl || 'No video published yet'}
+                      readOnly
+                      className="flex-1 text-sm bg-background"
+                      disabled={!publishedUrl}
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => publishedUrl && window.open(publishedUrl, '_blank')}
+                      className="h-8 px-2"
+                      disabled={!publishedUrl}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Features Card */}
+              <div className="flex flex-col space-y-1.5 sm:space-y-2 p-2 border-2 border-primary/20 rounded-lg shadow-sm">
+                <Label className="text-xs sm:text-sm font-semibold flex items-center">
+                  <AlertCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" /> Key Features
+                </Label>
+                <div className="space-y-1 sm:space-y-1.5">
+                  <div className="flex items-start space-x-1.5 sm:space-x-2">
+                    <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-[10px] sm:text-xs">Speech Recognition</h4>
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground">Record and transcribe speech in multiple Indian languages</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-1.5 sm:space-x-2">
+                    <Type className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-[10px] sm:text-xs">Text Input</h4>
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground">Type or paste text for direct processing</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-1.5 sm:space-x-2">
+                    <FileAudio className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-[10px] sm:text-xs">Audio Import</h4>
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground">Upload audio files for transcription</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-1.5 sm:space-x-2">
+                    <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-[10px] sm:text-xs">ISL Video Generation</h4>
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground">Convert text to Indian Sign Language video</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-1.5 sm:space-x-2">
+                    <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-[10px] sm:text-xs">Multi-language Support</h4>
+                      <p className="text-[9px] sm:text-[11px] text-muted-foreground">Supports English, Hindi, Marathi, and Gujarati</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <footer className="text-center py-1.5 sm:py-2 text-muted-foreground text-xs sm:text-sm">
+          <p>&copy; {new Date().getFullYear()} ISL Studio. AI-powered communication support. | Sundyne Technologies</p>
+        </footer>
+      </div>
     </main>
   );
 }
