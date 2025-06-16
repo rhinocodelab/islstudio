@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcribe-audio';
 import { translateTextIfNecessary, type TranslateTextIfNecessaryInput } from '@/ai/flows/translate-text-if-necessary-flow';
 import toast, { Toaster } from 'react-hot-toast';
+import { ISLDictionary } from '@/components/ISLDictionary';
 
 const LANGUAGES = [
   { value: 'English', label: 'English' },
@@ -125,6 +126,8 @@ export default function Home() {
   const streamRef = useRef<MediaStream | null>(null);
   const mimeTypeRef = useRef<string | null>(null);
   const isResettingRef = useRef(false);
+
+  const [isDictionaryOpen, setIsDictionaryOpen] = useState(false);
 
   const clearPreviousAudio = useCallback(() => {
     if (recordedAudioUrl) {
@@ -769,26 +772,28 @@ export default function Home() {
                   <Label htmlFor="isl-video-output" className="text-base sm:text-lg font-semibold flex items-center">
                     <Video className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Generated ISL Video
                   </Label>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={handleDeleteGeneratedVideos}
-                    disabled={isLoading || isGeneratingVideo}
-                    className="h-7 sm:h-8 text-xs sm:text-sm"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                    Delete All
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="default"
-                    onClick={handleDeleteGeneratedVideos}
-                    disabled={isLoading || isGeneratingVideo}
-                    className="h-7 sm:h-8 text-xs sm:text-sm bg-gray-600 hover:bg-gray-700"
-                  >
-                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
-                    ISL Dictionary
-                  </Button>
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => setIsDictionaryOpen(true)}
+                      disabled={isLoading || isGeneratingVideo}
+                      className="h-7 sm:h-8 text-xs sm:text-sm bg-gray-600 hover:bg-gray-700"
+                    >
+                      <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                      ISL Dictionary
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleDeleteGeneratedVideos}
+                      disabled={isLoading || isGeneratingVideo}
+                      className="h-7 sm:h-8 text-xs sm:text-sm"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                      Delete All
+                    </Button>
+                  </div>
                 </div>
                 <div id="isl-video-output" className="aspect-video w-full bg-muted/50 rounded-lg shadow-inner flex items-center justify-center p-2 flex-grow overflow-hidden">
                   {generatedVideoUrl ? (
@@ -928,6 +933,12 @@ export default function Home() {
           <p>&copy; {new Date().getFullYear()} ISL Studio. AI-powered communication support. | Sundyne Technologies</p>
         </footer>
       </div>
+
+      {/* ISL Dictionary Modal */}
+      <ISLDictionary 
+        isOpen={isDictionaryOpen}
+        onClose={() => setIsDictionaryOpen(false)}
+      />
     </main>
   );
 }
