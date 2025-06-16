@@ -14,8 +14,8 @@ export async function GET(request: Request) {
       );
     }
 
-    // Ensure the filename is safe and only contains allowed characters
-    if (!/^isl_video_[a-f0-9-]+\.html$/.test(filename)) {
+    // Ensure the filename is safe and matches our fixed filename
+    if (filename !== 'isl_video.html') {
       return NextResponse.json(
         { message: 'Invalid filename format' },
         { status: 400 }

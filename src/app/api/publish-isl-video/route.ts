@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: Request) {
   try {
@@ -17,8 +16,8 @@ export async function POST(request: Request) {
     // Get the video filename from the URL
     const videoFilename = path.basename(videoUrl);
     
-    // Generate a unique ID for the video
-    const videoId = uuidv4();
+    // Use fixed filename
+    const htmlFilename = 'isl_video.html';
     
     // Create the HTML content
     const htmlContent = `<!DOCTYPE html>
@@ -109,20 +108,17 @@ export async function POST(request: Request) {
     const publishedDir = path.join(process.cwd(), 'public', 'published_videos');
     await fs.mkdir(publishedDir, { recursive: true });
 
-    // Generate a unique filename for the HTML file using the videoId
-    const htmlFilename = `isl_video_${videoId}.html`;
     const htmlPath = path.join(publishedDir, htmlFilename);
 
     // Write the HTML file
     await fs.writeFile(htmlPath, htmlContent);
 
     // Generate the public URL using the API route
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://192.168.1.92:9002';
     const publicUrl = `${baseUrl}/api/serve-published-video?filename=${htmlFilename}`;
 
     return NextResponse.json({
       message: 'Video published successfully',
-      videoId: videoId,
       htmlUrl: `/api/serve-published-video?filename=${htmlFilename}`,
       publicUrl: publicUrl
     });
