@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Mic, Loader2, AlertCircle, Type, FileAudio, Square, Video, Film, Download, RotateCcw, Copy, ExternalLink } from "lucide-react";
+import { Mic, Loader2, AlertCircle, Type, FileAudio, Square, Video, Film, Download, RotateCcw, Copy, ExternalLink, BookOpen } from "lucide-react";
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcribe-audio';
@@ -100,12 +100,17 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
-export default function ISLStudioPage() {
+export default function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('English');
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualInputText, setManualInputText] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -120,11 +125,6 @@ export default function ISLStudioPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const mimeTypeRef = useRef<string | null>(null);
   const isResettingRef = useRef(false);
-
-  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
-
-  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
   const clearPreviousAudio = useCallback(() => {
     if (recordedAudioUrl) {
@@ -778,6 +778,16 @@ export default function ISLStudioPage() {
                   >
                     <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
                     Delete All
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={handleDeleteGeneratedVideos}
+                    disabled={isLoading || isGeneratingVideo}
+                    className="h-7 sm:h-8 text-xs sm:text-sm bg-gray-600 hover:bg-gray-700"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" />
+                    ISL Dictionary
                   </Button>
                 </div>
                 <div id="isl-video-output" className="aspect-video w-full bg-muted/50 rounded-lg shadow-inner flex items-center justify-center p-2 flex-grow overflow-hidden">
