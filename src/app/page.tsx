@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcribe-audio';
 import { translateTextIfNecessary, type TranslateTextIfNecessaryInput } from '@/ai/flows/translate-text-if-necessary-flow';
+import toast, { Toaster } from 'react-hot-toast';
 
 const LANGUAGES = [
   { value: 'English', label: 'English' },
@@ -406,16 +407,15 @@ export default function ISLStudioPage() {
 
   const handleGenerateVideo = async () => {
     if (!translatedText.trim()) {
-      setError('Please process some text first');
+      toast.error('Please process some text first');
       return;
     }
 
+    setIsGeneratingVideo(true);
+    setGeneratedVideoUrl(null);
+    setPublishedUrl(null);
+
     try {
-      setIsGeneratingVideo(true);
-      setError(null);
-
-      console.log('Sending text for video generation:', translatedText);
-
       const response = await fetch('/api/generate-isl-video', {
         method: 'POST',
         headers: {
@@ -424,123 +424,81 @@ export default function ISLStudioPage() {
         body: JSON.stringify({ sentence: translatedText }),
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
 
-      if (!response.ok) {
-        console.error('API Error Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: data
-        });
-
-        const errorDetails = data.details || data.error || 'Unknown error';
-        const errorType = data.type || 'Error';
-        const errorMessage = `${errorType}: ${errorDetails}`;
-
-        throw new Error(errorMessage);
+      if (response.ok) {
+        setGeneratedVideoUrl(data.videoUrl);
+        toast.success('Video generated successfully!');
+      } else {
+        toast.error(data.message || 'Failed to generate video');
       }
-
-      if (!data.videoUrl) {
-        console.error('No video URL in response:', data);
-        throw new Error('No video URL received from server');
-      }
-
-      console.log('Received video URL:', data.videoUrl);
-      setGeneratedVideoUrl(data.videoUrl);
     } catch (error) {
       console.error('Error generating video:', error);
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Failed to generate ISL video. Please try again.';
-      setError(errorMessage);
+      toast.error('Failed to generate video. Please try again.');
     } finally {
       setIsGeneratingVideo(false);
     }
   };
 
+  const handlePublishVideo = async () => {
+    if (!generatedVideoUrl) {
+      toast.error('Please generate a video first');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/publish-isl-video', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          videoUrl: generatedVideoUrl,
+          caption: translatedText || transcribedText,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPublishedUrl(data.publicUrl);
+        toast.success('Video published successfully!');
+        // Open the published video in a new tab
+        window.open(data.publicUrl, '_blank');
+      } else {
+        toast.error(data.message || 'Failed to publish video');
+      }
+    } catch (error) {
+      console.error('Error publishing video:', error);
+      toast.error('Failed to publish video. Please try again.');
+    }
+  };
+
   const handleDeleteGeneratedVideos = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
-
       const response = await fetch('/api/delete-generated-videos', {
         method: 'DELETE',
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete videos');
+      if (response.ok) {
+        setGeneratedVideoUrl(null);
+        setPublishedUrl(null);
+        toast.success(data.message || 'All videos deleted successfully');
+      } else {
+        toast.error(data.message || 'Failed to delete videos');
       }
-
-      // Clear the current video and published URL
-      setGeneratedVideoUrl(null);
-      setPublishedUrl(null);
-
-      // Show success message
-      alert(data.message);
     } catch (error) {
       console.error('Error deleting videos:', error);
-      setError(error instanceof Error ? error.message : 'Failed to delete videos');
-    } finally {
-      setIsLoading(false);
+      toast.error('Failed to delete videos. Please try again.');
     }
   };
 
-  const handlePublishVideo = async () => {
-    if (!generatedVideoUrl || isGeneratingVideo) {
-      setError('Please generate a video first');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch('/api/publish-isl-video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          videoUrl: generatedVideoUrl,
-          caption: translatedText 
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to publish video');
-      }
-
-      // Set the published URL
-      setPublishedUrl(data.publicUrl);
-      
-      // Show success message
-      alert('Video published successfully!');
-    } catch (error) {
-      console.error('Error publishing video:', error);
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Failed to publish ISL video. Please try again.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCopyUrl = async () => {
+  const handleCopyUrl = () => {
     if (publishedUrl) {
-      try {
-        await navigator.clipboard.writeText(publishedUrl);
-        alert('URL copied to clipboard!');
-      } catch (err) {
-        console.error('Failed to copy URL:', err);
-        setError('Failed to copy URL to clipboard');
-      }
+      navigator.clipboard.writeText(publishedUrl);
+      toast.success('URL copied to clipboard!');
     }
   };
 
@@ -944,6 +902,29 @@ export default function ISLStudioPage() {
       <footer className="text-center py-1.5 sm:py-2 text-muted-foreground text-xs sm:text-sm">
         <p>&copy; {new Date().getFullYear()} ISL Studio. AI-powered communication support. | Sundyne Technologies</p>
       </footer>
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1F2937',
+            color: '#fff',
+            border: '1px solid #374151',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </main>
   );
 }
