@@ -220,6 +220,12 @@ export default function Home() {
     audioChunksRef.current = [];
 
     try {
+      // Check if mediaDevices is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Your browser does not support audio recording. Please use a modern browser like Chrome, Firefox, or Edge.');
+      }
+
+      // Request microphone access
       streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       let options = { mimeType: 'audio/webm' };
@@ -243,7 +249,17 @@ export default function Home() {
       setIsRecording(true);
     } catch (err) {
       console.error("Error starting recording:", err);
-      setError("Microphone access denied or not available. Please check your browser permissions.");
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          setError("Microphone access was denied. Please allow microphone access and try again.");
+        } else if (err.name === 'NotFoundError') {
+          setError("No microphone found. Please connect a microphone and try again.");
+        } else {
+          setError(`Recording error: ${err.message}`);
+        }
+      } else {
+        setError("An unexpected error occurred while trying to access the microphone.");
+      }
       setIsRecording(false);
       setIsLoading(false);
       if (streamRef.current) {

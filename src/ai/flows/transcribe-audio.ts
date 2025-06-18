@@ -38,12 +38,16 @@ export async function transcribeAudio(input: TranscribeAudioInput) {
     const audioBytes = input.audioDataUri.split(',')[1];
     const audioBuffer = Buffer.from(audioBytes, 'base64');
 
+    // Check if the audio is WAV format
+    const isWav = input.audioDataUri.startsWith('data:audio/wav') || 
+                 input.audioDataUri.startsWith('data:audio/x-wav');
+
     const [response] = await client.recognize({
       audio: {
         content: audioBuffer.toString('base64'),
       },
       config: {
-        encoding: 'WEBM_OPUS',
+        encoding: isWav ? 'LINEAR16' : 'WEBM_OPUS',
         sampleRateHertz: 48000,
         languageCode: input.sourceLanguage === 'English' ? 'en-US' : 'hi-IN',
       },
