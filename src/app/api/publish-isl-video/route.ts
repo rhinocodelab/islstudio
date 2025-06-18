@@ -58,6 +58,11 @@ export async function POST(request: Request) {
             flex-direction: column;
             align-items: center;
             background: transparent;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .video-container.fade-out {
+            opacity: 0;
         }
         video {
             width: 100%;
@@ -65,6 +70,7 @@ export async function POST(request: Request) {
             height: auto;
             object-fit: contain;
             display: block;
+            transition: transform 0.5s ease-in-out;
         }
         .caption {
             background: rgba(0, 0, 0, 0.7);
@@ -78,6 +84,10 @@ export async function POST(request: Request) {
             max-width: 800px;
             box-sizing: border-box;
             margin-top: 10px;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .caption.fade-out {
+            opacity: 0;
         }
         @media screen and (max-width: 600px) {
             .video-container {
@@ -104,6 +114,8 @@ export async function POST(request: Request) {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const video = document.getElementById('videoPlayer');
+            const container = document.querySelector('.video-container');
+            const caption = document.querySelector('.caption');
             
             if (video) {
                 // Remove loop attribute after first play
@@ -111,20 +123,32 @@ export async function POST(request: Request) {
                     video.loop = false;
                 }, { once: true });
 
-                // Add ended event listener
+                // Add ended event listener with smooth transition
                 video.addEventListener('ended', function() {
-                    console.log('Video ended, refreshing page...');
+                    console.log('Video ended, preparing to refresh...');
+                    
+                    // Add fade-out class to elements
+                    container.classList.add('fade-out');
+                    caption.classList.add('fade-out');
+                    
+                    // Wait for fade-out animation to complete
                     setTimeout(() => {
                         window.location.reload();
-                    }, 2000); // Wait 2 seconds before refreshing
+                    }, 500); // Reduced to 500ms to match the CSS transition
                 });
 
-                // Add error handling
+                // Add error handling with smooth transition
                 video.addEventListener('error', function(e) {
                     console.error('Video error:', e);
+                    
+                    // Add fade-out class to elements
+                    container.classList.add('fade-out');
+                    caption.classList.add('fade-out');
+                    
+                    // Wait for fade-out animation to complete
                     setTimeout(() => {
                         window.location.reload();
-                    }, 5000); // Wait 5 seconds before refreshing on error
+                    }, 500);
                 });
             } else {
                 console.error('Video element not found');

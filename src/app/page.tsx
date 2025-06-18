@@ -392,6 +392,8 @@ export default function Home() {
     setManualInputText('');
     setSelectedFile(null);
     setActiveTab("speech");
+    setGeneratedVideoUrl(null);
+    setPublishedUrl(null);
 
     clearPreviousAudio();
     setFileInputKey(prevKey => prevKey + 1);
@@ -438,13 +440,6 @@ export default function Home() {
     setIsGeneratingVideo(true);
 
     try {
-      // Get the IP address from the API
-      const configResponse = await fetch('/api/get-publish-config');
-      if (!configResponse.ok) {
-        throw new Error('Failed to read publish configuration');
-      }
-      const { ipAddress } = await configResponse.json();
-
       const response = await fetch('/api/generate-isl-video', {
         method: 'POST',
         headers: {
@@ -462,12 +457,8 @@ export default function Home() {
         throw new Error('No video URL in response');
       }
 
-      // Extract filename from the video URL
-      const videoUrl = data.videoUrl;
-      const videoFileName = videoUrl.split('/').pop();
-      
-      setGeneratedVideoUrl(videoUrl);
-      setPublishedUrl(`http://${ipAddress}:9002/generated_videos/${videoFileName}`);
+      setGeneratedVideoUrl(data.videoUrl);
+      setPublishedUrl(null); // Reset published URL
     } catch (e: any) {
       console.error("Video generation error:", e);
       setError(`Video generation failed: ${e.message || 'Unknown error'}`);
@@ -481,35 +472,43 @@ export default function Home() {
 
   const handlePublishVideo = async () => {
     if (!generatedVideoUrl) {
-      toast.error('Please generate a video first');
+      setError("Please generate a video first.");
       return;
     }
+    setError(null);
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/publish-isl-video', {
+      // Get the IP address from the API
+      const configResponse = await fetch('/api/get-publish-config');
+      if (!configResponse.ok) {
+        throw new Error('Failed to read publish configuration');
+      }
+      const { ipAddress } = await configResponse.json();
+
+      const publishResponse = await fetch('/api/publish-isl-video', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           videoUrl: generatedVideoUrl,
-          caption: translatedText || transcribedText,
+          caption: translatedText 
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setPublishedUrl(data.publicUrl);
-        toast.success('Video published successfully!');
-        // Open the published video in a new tab
-        window.open(data.publicUrl, '_blank');
-      } else {
-        toast.error(data.message || 'Failed to publish video');
+      if (!publishResponse.ok) {
+        throw new Error(`Failed to publish video: ${publishResponse.statusText}`);
       }
-    } catch (error) {
-      console.error('Error publishing video:', error);
-      toast.error('Failed to publish video. Please try again.');
+
+      const publishData = await publishResponse.json();
+      setPublishedUrl(publishData.publicUrl);
+    } catch (e: any) {
+      console.error("Video publishing error:", e);
+      setError(`Video publishing failed: ${e.message || 'Unknown error'}`);
+      setPublishedUrl(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -853,36 +852,30 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2 mt-2">
+                <div className="flex flex-col space-y-4">
                   <Button
                     size="lg"
-                    className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
-                    variant="default"
+                    className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto"
+                    variant="outline"
                     onClick={handleGenerateVideo}
-                    disabled={isLoading || !translatedText.trim() || isGeneratingVideo}
+                    disabled={isLoading || isRecording || !translatedText.trim() || (isLoading && activeTab === 'type')}
                   >
-                    {isGeneratingVideo ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                        Generating Video...
-                      </>
-                    ) : (
-                      <>
-                        <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                        Generate ISL Video
-                      </>
-                    )}
+                    {isLoading && activeTab === 'type' ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <Video className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
+                    Generate ISL Video
                   </Button>
-                  <Button
-                    size="lg"
-                    className="flex-1 py-2 sm:py-3 text-sm sm:text-md rounded-lg shadow-md h-auto"
-                    variant="secondary"
-                    onClick={handlePublishVideo}
-                    disabled={!generatedVideoUrl || isGeneratingVideo}
-                  >
-                    <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    Publish ISL Video
-                  </Button>
+
+                  {generatedVideoUrl && !publishedUrl && (
+                    <Button
+                      size="lg"
+                      className="w-full py-2 sm:py-3 text-base sm:text-lg rounded-lg shadow-md h-auto"
+                      variant="outline"
+                      onClick={handlePublishVideo}
+                      disabled={isLoading}
+                    >
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" /> : <Film className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />}
+                      Publish ISL Video
+                    </Button>
+                  )}
                 </div>
 
                 <div className="mt-4 p-3 bg-muted/30 rounded-lg">
