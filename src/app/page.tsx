@@ -549,7 +549,7 @@ export default function Home() {
           },
         }}
       />
-      <div className="container mx-auto px-2 sm:px-4">
+      <div className="container mx-auto px-1 sm:px-4">
         <Card className="w-full max-w-6xl mx-auto shadow-2xl rounded-xl overflow-hidden h-[calc(100vh-1rem)] sm:h-[calc(100vh-2rem)] flex flex-col relative z-10">
           <CardHeader className="bg-primary text-primary-foreground p-2 sm:p-3">
             <CardTitle className="text-xl sm:text-2xl font-headline text-center">ISL Studio</CardTitle>
