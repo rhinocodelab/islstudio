@@ -20,6 +20,8 @@ import { transcribeAudio, type TranscribeAudioInput } from '@/ai/flows/transcrib
 import { translateTextIfNecessary, type TranslateTextIfNecessaryInput } from '@/ai/flows/translate-text-if-necessary-flow';
 import toast, { Toaster } from 'react-hot-toast';
 import { ISLDictionary } from '@/components/ISLDictionary';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 const LANGUAGES = [
   { value: 'English', label: 'English' },
@@ -425,16 +427,24 @@ export default function Home() {
   const recordButtonState = getRecordButtonState();
 
   const handleGenerateVideo = async () => {
-    if (!translatedText.trim()) {
-      toast.error('Please process some text first');
+    if (isLoading || !translatedText.trim()) {
+      if (!translatedText.trim()) {
+        setError("Please process some text first.");
+      }
       return;
     }
-
+    setError(null);
+    setIsLoading(true);
     setIsGeneratingVideo(true);
-    setGeneratedVideoUrl(null);
-    setPublishedUrl(null);
 
     try {
+      // Get the IP address from the API
+      const configResponse = await fetch('/api/get-publish-config');
+      if (!configResponse.ok) {
+        throw new Error('Failed to read publish configuration');
+      }
+      const { ipAddress } = await configResponse.json();
+
       const response = await fetch('/api/generate-isl-video', {
         method: 'POST',
         headers: {
@@ -443,18 +453,28 @@ export default function Home() {
         body: JSON.stringify({ sentence: translatedText }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setGeneratedVideoUrl(data.videoUrl);
-        toast.success('Video generated successfully!');
-      } else {
-        toast.error(data.message || 'Failed to generate video');
+      if (!response.ok) {
+        throw new Error(`Failed to generate video: ${response.statusText}`);
       }
-    } catch (error) {
-      console.error('Error generating video:', error);
-      toast.error('Failed to generate video. Please try again.');
+
+      const data = await response.json();
+      if (!data.videoUrl) {
+        throw new Error('No video URL in response');
+      }
+
+      // Extract filename from the video URL
+      const videoUrl = data.videoUrl;
+      const videoFileName = videoUrl.split('/').pop();
+      
+      setGeneratedVideoUrl(videoUrl);
+      setPublishedUrl(`http://${ipAddress}:9002/generated_videos/${videoFileName}`);
+    } catch (e: any) {
+      console.error("Video generation error:", e);
+      setError(`Video generation failed: ${e.message || 'Unknown error'}`);
+      setGeneratedVideoUrl(null);
+      setPublishedUrl(null);
     } finally {
+      setIsLoading(false);
       setIsGeneratingVideo(false);
     }
   };
