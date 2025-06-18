@@ -95,12 +95,42 @@ export async function POST(request: Request) {
 </head>
 <body>
     <div class="video-container">
-        <video autoplay muted loop playsinline>
+        <video autoplay muted loop playsinline id="videoPlayer">
             <source src="/generated_videos/${videoFilename}" type="video/mp4">
             Your browser does not support the video tag. Please try another browser or check the file path.
         </video>
         <div class="caption">${caption || 'ISL Video Translation'}</div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('videoPlayer');
+            
+            if (video) {
+                // Remove loop attribute after first play
+                video.addEventListener('play', function() {
+                    video.loop = false;
+                }, { once: true });
+
+                // Add ended event listener
+                video.addEventListener('ended', function() {
+                    console.log('Video ended, refreshing page...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000); // Wait 2 seconds before refreshing
+                });
+
+                // Add error handling
+                video.addEventListener('error', function(e) {
+                    console.error('Video error:', e);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 5000); // Wait 5 seconds before refreshing on error
+                });
+            } else {
+                console.error('Video element not found');
+            }
+        });
+    </script>
 </body>
 </html>`;
 
