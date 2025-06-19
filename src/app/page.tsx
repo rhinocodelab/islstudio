@@ -668,7 +668,7 @@ export default function Home() {
                 </TabsList>
                 <div className="flex-1 overflow-y-auto">
                   <TabsContent value="speech" className="pt-3 sm:pt-4">
-                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[300px] sm:min-h-[250px] flex flex-col">
                       <h3 className="text-base sm:text-lg font-semibold flex items-center">
                         <Mic className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Speech to Text
                       </h3>
@@ -706,7 +706,7 @@ export default function Home() {
                     </div>
                   </TabsContent>
                   <TabsContent value="type" className="pt-3 sm:pt-4">
-                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[300px] sm:min-h-[250px] flex flex-col">
                       <h3 className="text-base sm:text-lg font-semibold flex items-center">
                         <Type className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Type Text to Process
                       </h3>
@@ -734,7 +734,7 @@ export default function Home() {
                     </div>
                   </TabsContent>
                   <TabsContent value="import" className="pt-3 sm:pt-4">
-                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[180px] sm:min-h-[200px] flex flex-col">
+                    <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border rounded-lg shadow-sm min-h-[300px] sm:min-h-[250px] flex flex-col">
                       <h3 className="text-base sm:text-lg font-semibold flex items-center">
                         <FileAudio className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary" /> Import Audio
                       </h3>
