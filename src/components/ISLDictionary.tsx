@@ -109,19 +109,11 @@ export function ISLDictionary({ isOpen, onClose }: ISLDictionaryProps) {
 
       {/* Video Modal */}
       <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader className="flex flex-row items-center justify-between py-2">
             <DialogTitle className="text-base font-semibold">
               {selectedWord}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsVideoModalOpen(false)}
-              className="h-7 w-7"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
           </DialogHeader>
           <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
             {selectedWord && (
